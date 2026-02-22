@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { Heartbeat } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import type { MetricPoint } from '../../types/interfaces';
 import { formatNumber } from '../../utils/formatters';
 
@@ -32,7 +32,7 @@ export const LiveTrafficChart = ({ data }: LiveTrafficChartProps) => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold flex items-center gap-3">
           <div className="p-2 rounded-lg bg-blue-500/10">
-            <Heartbeat className="text-blue-400" size={20} strokeWidth={2} />
+            <Activity className="text-blue-400" size={20} strokeWidth={2} />
           </div>
           Real-time Threat Activity
         </h2>

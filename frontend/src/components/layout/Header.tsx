@@ -3,7 +3,7 @@
  * Main application header with branding and system status indicator
  */
 
-import { ShieldLock } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import type { SystemState } from '../../types/interfaces';
 
 interface HeaderProps {
@@ -19,7 +19,7 @@ export const Header = ({ systemStatus, onExportReport }: HeaderProps) => {
       <div className="flex items-center gap-4">
         {/* Logo with glow effect */}
         <div className="relative flex items-center justify-center">
-          <ShieldLock
+          <Shield
             size={52}
             className="text-cyan-400 opacity-90"
             strokeWidth={1.5}
@@ -43,13 +43,12 @@ export const Header = ({ systemStatus, onExportReport }: HeaderProps) => {
         {/* Status Indicator */}
         <div className="flex items-center gap-2 px-4 py-2 bg-slate-900/50 backdrop-blur-md rounded-full border border-slate-800 hover:border-slate-700 transition-colors">
           <div
-            className={`w-2 h-2 rounded-full ${
-              isActive
+            className={`w-2 h-2 rounded-full ${isActive
                 ? 'bg-green-400 animate-pulse'
                 : systemStatus.status === 'Connecting...'
                   ? 'bg-yellow-400 animate-pulse'
                   : 'bg-red-500'
-            }`}
+              }`}
           ></div>
           <span className="text-sm font-medium text-slate-200">
             System {systemStatus.status}

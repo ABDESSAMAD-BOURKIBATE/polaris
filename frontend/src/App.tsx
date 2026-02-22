@@ -1,62 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  IconActivityHeartbeat,
-  IconAlertTriangle,
-  IconNetwork,
-  IconServerCog,
   IconDatabaseExport,
   IconShieldExclamation,
   IconDeviceLaptop,
   IconAlertCircle,
   IconLockSquareRounded
 } from '@tabler/icons-react';
-import type { Icon } from '@tabler/icons-react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: Icon;
-  colorClass: string;
-}
 
-const StatCard = ({ title, value, icon: Icon, colorClass }: StatCardProps) => (
-  <div className="glass-panel p-6 flex items-center justify-between">
-    <div>
-      <p className="text-slate-400 text-sm font-medium">{title}</p>
-      <h3 className="text-3xl font-bold mt-1">{value}</h3>
-    </div>
-    <div className={`p-4 rounded-full ${colorClass}`}>
-      <Icon size={24} />
-    </div>
-  </div>
-);
+import type { MetricPoint } from './types/interfaces';
 
-interface MetricPoint {
-  time: string;
-  threats: number;
-  traffic: number;
-}
-
-interface AlertMessage {
-  id: number;
-  type: string;
-  source: string;
-  desc: string;
-  time: string;
-}
 
 import { Login } from './components/auth/Login';
-import { LiveAttacks } from './components/metrics/LiveAttacks';
-import { SecurityStats } from './components/metrics/SecurityStats';
+import {
+  KpiGrid,
+  LiveAttacks,
+  SecurityStats,
+  LiveTrafficChart,
+  RiskDistribution,
+  ThreatFeed
+} from './components';
+import { useThreatSimulation } from './hooks';
 import { generateProfessionalReport } from './utils/reportGenerator';
 
 const MobileSecurityBlock = () => (
@@ -117,13 +81,9 @@ export default function App() {
   const [isExporting, setIsExporting] = useState(false);
 
   // Real-time metrics
-  const [activeThreats, setActiveThreats] = useState(0);
-  const [eventsPerSec, setEventsPerSec] = useState(0);
-  const [agents] = useState(12);
   const [indexedLogs, setIndexedLogs] = useState(842000);
 
   const [dataStream, setDataStream] = useState<MetricPoint[]>([]);
-  const [alerts, setAlerts] = useState<AlertMessage[]>([]);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -193,11 +153,11 @@ export default function App() {
     setIsExporting(true);
     try {
       await generateProfessionalReport({
-        activeThreats,
-        eventsPerSec,
-        agents,
+        activeThreats: simulationState.activeAlerts.length,
+        eventsPerSec: simulationState.ingestRate,
+        agents: 12,
         indexedLogs,
-        alerts
+        alerts: simulationState.activeAlerts
       });
     } catch (error) {
       console.error("Export failed:", error);
@@ -212,24 +172,6 @@ export default function App() {
     setIsLoggedIn(false);
   };
 
-  // Fetch real logs from DB initially
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetch('http://127.0.0.1:8000/logs')
-        .then(res => res.json())
-        .then(data => {
-          const formattedAlerts = data.map((log: any) => ({
-            id: log.id,
-            type: log.type,
-            source: log.source,
-            desc: log.description,
-            time: new Date(log.timestamp).toLocaleTimeString()
-          }));
-          setAlerts(formattedAlerts);
-        })
-        .catch(err => console.error("Error fetching logs", err));
-    }
-  }, [isLoggedIn]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -248,20 +190,13 @@ export default function App() {
         const payload = JSON.parse(event.data);
 
         if (payload.type === 'METRICS_UPDATE' && payload.data) {
-          const { time, threats, traffic } = payload.data;
-
-          setActiveThreats(threats);
-          setEventsPerSec(traffic);
-          setIndexedLogs(prev => prev + traffic);
+          setIndexedLogs(prev => prev + payload.data.traffic);
 
           setDataStream(prev => {
-            const newStream = [...prev, { time, threats, traffic }];
+            const newStream = [...prev, { ...payload.data, anomalyScore: payload.data.anomalyScore || 0 }];
             return newStream.slice(-20); // Keep last 20
           });
 
-          if (payload.alert) {
-            setAlerts(prev => [payload.alert, ...prev].slice(0, 8));
-          }
         }
       } catch (err) {
         console.error("Failed to parse websocket message", err);
@@ -284,6 +219,8 @@ export default function App() {
       }
     };
   }, [isLoggedIn]);
+
+  const simulationState = useThreatSimulation();
 
   if (isMobileDevice) {
     return <MobileSecurityBlock />;
@@ -348,77 +285,33 @@ export default function App() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Active Threats" value={activeThreats} icon={IconAlertTriangle} colorClass="bg-red-500/10 text-red-400" />
-          <StatCard title="Network Events/s" value={eventsPerSec.toLocaleString()} icon={IconNetwork} colorClass="bg-blue-500/10 text-blue-400" />
-          <StatCard title="System Agents" value={agents} icon={IconServerCog} colorClass="bg-emerald-500/10 text-emerald-400" />
-          <StatCard title="Logs Indexed" value={(indexedLogs / 1000).toFixed(1) + 'K'} icon={IconDatabaseExport} colorClass="bg-purple-500/10 text-purple-400" />
-        </div>
+        {/* KPI Grid Section */}
+        <KpiGrid state={simulationState} />
 
+        {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="glass-panel p-6 col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <IconActivityHeartbeat className="text-cyber-blue" size={24} stroke={1.5} />
-                Real-time Threat Activity
-              </h2>
-            </div>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dataStream}>
-                  <defs>
-                    <linearGradient id="colorThreats" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.4} vertical={false} />
-                  <XAxis dataKey="time" stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94A3B8" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1E293B', borderColor: '#334155', borderRadius: '8px' }}
-                    itemStyle={{ color: '#E2E8F0' }}
-                  />
-                  <Area type="monotone" dataKey="threats" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorThreats)" isAnimationActive={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          {/* Main Traffic Chart */}
+          <LiveTrafficChart data={[...dataStream, simulationState.currentMetrics]} />
 
-          <div className="glass-panel p-6">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <IconShieldExclamation className="text-cyber-warning" size={24} stroke={1.5} />
-              Actionable Intelligence
-            </h2>
-            <div className="space-y-4 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
-              {alerts.length === 0 ? (
-                <p className="text-sm text-slate-500 italic">No actionable intelligence currently. Monitoring...</p>
-              ) : alerts.map((alert, idx) => (
-                <div key={alert.id || idx} className="p-4 rounded-lg bg-cyber-900/50 border border-slate-700/50 hover:border-slate-600 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wider
-                    ${alert.type === 'Critical' ? 'bg-red-500/20 text-red-400' :
-                        alert.type === 'High' ? 'bg-orange-500/20 text-orange-400' :
-                          'bg-yellow-500/20 text-yellow-400'}`}>
-                      {alert.type}
-                    </span>
-                    <span className="text-xs text-slate-500">{alert.time}</span>
-                  </div>
-                  <h4 className="text-sm font-semibold text-white mb-1">{alert.desc}</h4>
-                  <p className="text-xs text-slate-400 font-mono">{alert.source}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Risk Distribution */}
+          <RiskDistribution data={simulationState.riskDistribution} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          {/* Live Attacks Feed */}
           <div className="col-span-2">
             <LiveAttacks />
           </div>
+
+          {/* Infrastructure Health */}
           <div>
             <SecurityStats />
           </div>
+        </div>
+
+        {/* Threat Intelligence Feed */}
+        <div className="mt-6">
+          <ThreatFeed alerts={simulationState.activeAlerts} />
         </div>
       </div>
     </div>

@@ -3,8 +3,8 @@
  * Individual metric card with icon and status indicator
  */
 
-import { LucideIcon } from 'lucide-react';
-import { getSeverityColor, getStatusColor, getStatusBgColor } from '../../utils/formatters';
+import type { LucideIcon } from 'lucide-react';
+import { getStatusColor, getStatusBgColor } from '../../utils/formatters';
 
 interface KpiCardProps {
   title: string;
@@ -46,13 +46,12 @@ export const KpiCard = ({
 
         {/* Icon Container */}
         <div
-          className={`p-3 rounded-lg flex items-center justify-center ${
-            status === 'healthy'
+          className={`p-3 rounded-lg flex items-center justify-center ${status === 'healthy'
               ? 'bg-emerald-500/10 text-emerald-400'
               : status === 'warning'
                 ? 'bg-yellow-500/10 text-yellow-400'
                 : 'bg-red-500/10 text-red-400'
-          }`}
+            }`}
         >
           <Icon size={24} strokeWidth={2} />
         </div>
@@ -71,13 +70,12 @@ export const KpiCard = ({
       {/* Status Bar */}
       <div className="mt-4 h-1 bg-slate-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${
-            status === 'healthy'
+          className={`h-full ${status === 'healthy'
               ? 'bg-emerald-500'
               : status === 'warning'
                 ? 'bg-yellow-500'
                 : 'bg-red-500'
-          }`}
+            }`}
           style={{
             width: status === 'healthy' ? '100%' : status === 'warning' ? '60%' : '30%'
           }}

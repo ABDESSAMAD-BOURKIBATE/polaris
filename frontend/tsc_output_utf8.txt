@@ -1,0 +1,6 @@
+﻿src/App.tsx(11,28): error TS6196: 'AlertMessage' is declared but never used.
+src/components/charts/LiveTrafficChart.tsx(17,10): error TS2305: Module '"lucide-react"' has no exported member 'Heartbeat'.
+src/components/charts/RiskDistribution.tsx(11,3): error TS6133: 'Legend' is declared but its value is never read.
+src/components/layout/Header.tsx(6,10): error TS2305: Module '"lucide-react"' has no exported member 'ShieldLock'.
+src/components/metrics/KpiCard.tsx(6,10): error TS1484: 'LucideIcon' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/metrics/KpiCard.tsx(7,10): error TS6133: 'getSeverityColor' is declared but its value is never read.
