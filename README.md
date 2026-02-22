@@ -2,7 +2,7 @@
   <img src="frontend/public/logo.png" alt="POLARIS Logo" width="120" />
   <h1>POLARIS</h1>
   <h3>Autonomous Cyber Intelligence Orchestration</h3>
-  <p><i>Lead Architect & Engineer: <b>Eng. Abdessamad Bourkibate</b></i></p>
+  <p><i>Security Science Researcher: <b>Abdessamad Bourkibate</b></i></p>
 
   [![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-emerald.svg?style=for-the-badge)]()
   [![Architecture: Modular React](https://img.shields.io/badge/Architecture-Modular%20React-blue.svg?style=for-the-badge)]()
